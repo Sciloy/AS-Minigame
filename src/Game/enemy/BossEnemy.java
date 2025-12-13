@@ -6,5 +6,6 @@ public class BossEnemy extends Enemy {
         this.baseDamage = 21;
         this.maxHp = 60;
         this.hp = maxHp;
+        setStrategy(new Game.strategy.DefensiveAttack());
     }
 }

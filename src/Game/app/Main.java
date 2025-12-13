@@ -19,7 +19,17 @@ public class Main {
         System.out.println("A wild " + enemy.getName() + " appears!");
 
         while (!player.isDead() && !enemy.isDead()) {
-            player.attack(enemy, bus);
+            // Poison tick at the start of player's turn
+            if (player.applyPoisonTick(bus)) {
+                break;
+            }
+
+            if (player.shouldSkipTurn()) {
+                System.out.println("Player skips this turn due to daze!");
+                player.consumeSkip();
+            } else {
+                player.attack(enemy, bus);
+            }
             if (enemy.isDead()) break;
 
             enemy.attack(player, bus);

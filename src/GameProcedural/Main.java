@@ -6,6 +6,8 @@ public class Main {
 
     static int playerHp = 100;
     static int playerMaxHp = 100;
+    static int playerPoison = 0;
+    static boolean playerSkip = false;
     static int enemyHp = 0;
     static int enemyMaxHp = 0;
     enum EnemyType {MELEE, RANGED, BOSS}
@@ -47,10 +49,32 @@ public class Main {
     }
     static void enemyAttacksPlayer(EnemyType t) {
         int dmg = baseDamage(t);
+        switch (t) {
+            case MELEE: // Aggressive: +5 dmg
+                dmg += 5;
+                break;
+            case RANGED: // Poison: base dmg, adds poison
+                break;
+            case BOSS: // Defensive: -5 dmg, 20% chance to daze player
+                dmg = Math.max(0, dmg - 5);
+                if (random.nextDouble() < 0.20) {
+                    playerSkip = true;
+                    System.out.println("Player is dazed and will skip their next turn!");
+                }
+                break;
+            
+            default:
+                break;
+        }
         System.out.println(enemyName(t) + " hits Player for " + dmg);
         playerHp = playerHp - dmg;
         if (playerHp < 0) playerHp = 0;
         System.out.println("Player HP: " + playerHp + " / " + playerMaxHp);
+
+        if (t == EnemyType.RANGED) {
+            playerPoison += 3;
+            System.out.println("Player is poisoned! +3 ongoing damage each turn.");
+        }
     }
 
     static void playerAttacksEnemy(EnemyType t) {
@@ -86,7 +110,24 @@ public class Main {
         System.out.println("A wild " + enemyName(enemyType) + " appears!");
 
         while (playerHp > 0 && enemyHp > 0) {
-            playerAttacksEnemy(enemyType);
+            // Poison tick on player at start of turn
+            if (playerPoison > 0) {
+                playerHp -= playerPoison;
+                if (playerHp < 0) playerHp = 0;
+                System.out.println("Poison hits Player for " + playerPoison);
+                System.out.println("Player HP: " + playerHp + " / " + playerMaxHp);
+                if (playerHp <= 0) {
+                    System.out.println("Player defeated!");
+                    break;
+                }
+            }
+
+            if (playerSkip) {
+                System.out.println("Player skips this turn due to daze!");
+                playerSkip = false;
+            } else {
+                playerAttacksEnemy(enemyType);
+            }
             if (enemyHp <= 0) {
                 System.out.println(enemyName(enemyType) + " defeated!");
                 break;
@@ -100,7 +141,4 @@ public class Main {
         }
     }
 }
-
-
-
 

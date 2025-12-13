@@ -6,5 +6,6 @@ public class RangedEnemy extends Enemy {
         this.baseDamage = 15;
         this.maxHp = 24;
         this.hp = maxHp;
+        setStrategy(new Game.strategy.PoisonAttack());
     }
 }
