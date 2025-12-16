@@ -8,18 +8,17 @@ public class Main {
     static int playerMaxHp = 100;
     static int playerPoison = 0;
     static boolean playerSkip = false;
+    static boolean enemyEnraged = false;
     static int enemyHp = 0;
     static int enemyMaxHp = 0;
     enum EnemyType {MELEE, RANGED, BOSS}
 
-
     static Random random = new Random();
-
 
     static EnemyType selectEnemy() {
         double r = random.nextDouble();
-        if (r < 0.6) return EnemyType.MELEE;   
-        if (r < 0.9) return EnemyType.RANGED;
+        if (r < 0.4) return EnemyType.MELEE;   
+        if (r < 0.8) return EnemyType.RANGED;
         return EnemyType.BOSS;       
     }
 
@@ -48,21 +47,34 @@ public class Main {
         }
     }
     static void enemyAttacksPlayer(EnemyType t) {
+        if (!enemyEnraged && enemyHp <= enemyMaxHp * 0.3) {
+            enemyEnraged = true;
+            System.out.println(enemyName(t) + " becomes enraged!");
+        }
         int dmg = baseDamage(t);
         switch (t) {
-            case MELEE: // Aggressive: +5 dmg
-                dmg += 5;
+            case MELEE:
+                if (enemyEnraged) {
+                    dmg += 5; // aggressive mode
+                }
                 break;
-            case RANGED: // Poison: base dmg, adds poison
+            case RANGED:
+                if (enemyEnraged) {
+                    rapidPoison();
+                    return;
+                }
                 break;
-            case BOSS: // Defensive: -5 dmg, 20% chance to daze player
-                dmg = Math.max(0, dmg - 5);
+            case BOSS:
+                dmg = Math.max(0, dmg - 5); // defensive base
                 if (random.nextDouble() < 0.20) {
                     playerSkip = true;
                     System.out.println("Player is dazed and will skip their next turn!");
                 }
+                if (enemyEnraged) {
+                    crushingBlow();
+                    return;
+                }
                 break;
-            
             default:
                 break;
         }
@@ -71,7 +83,7 @@ public class Main {
         if (playerHp < 0) playerHp = 0;
         System.out.println("Player HP: " + playerHp + " / " + playerMaxHp);
 
-        if (t == EnemyType.RANGED) {
+        if (t == EnemyType.RANGED && !enemyEnraged) {
             playerPoison += 3;
             System.out.println("Player is poisoned! +3 ongoing damage each turn.");
         }
@@ -109,7 +121,10 @@ public class Main {
 
         System.out.println("A wild " + enemyName(enemyType) + " appears!");
 
+        int round = 1;
         while (playerHp > 0 && enemyHp > 0) {
+            System.out.println();
+            System.out.println("=== Round " + round + " ===");
             // Poison tick on player at start of turn
             if (playerPoison > 0) {
                 playerHp -= playerPoison;
@@ -126,6 +141,7 @@ public class Main {
                 System.out.println("Player skips this turn due to daze!");
                 playerSkip = false;
             } else {
+                System.out.println("-- Player turn --");
                 playerAttacksEnemy(enemyType);
             }
             if (enemyHp <= 0) {
@@ -133,12 +149,58 @@ public class Main {
                 break;
             }
 
+            System.out.println("-- Enemy turn --");
             enemyAttacksPlayer(enemyType);
             if (playerHp <= 0) {
                 System.out.println("Player defeated!");
                 break;
             }
+            round++;
+
+            if (playerHp > 0 && enemyHp > 0) {
+                pauseBetweenRounds();
+            }
+        }
+    }
+
+    static void rapidPoison() {
+        int shotDmg = Math.max(1, baseDamage(EnemyType.RANGED) - 6);
+        int hits = 0;
+        for (int i = 0; i < 2; i++) {
+            if (random.nextDouble() > 0.65) {
+                System.out.println("Ranger's quick shot " + (i + 1) + " missed!");
+                continue;
+            }
+            playerHp -= shotDmg;
+            if (playerHp < 0) playerHp = 0;
+            System.out.println("Ranger quick shot " + (i + 1) + " hits Player for " + shotDmg);
+            System.out.println("Player HP: " + playerHp + " / " + playerMaxHp);
+            hits++;
+            if (playerHp <= 0) break;
+        }
+        if (hits > 0) {
+            playerPoison += 2;
+            System.out.println("Player is further poisoned!");
+        }
+    }
+
+    static void crushingBlow() {
+        if (random.nextDouble() > 0.7) {
+            System.out.println("Boss's crushing blow missed!");
+            return;
+        }
+        int dmg = baseDamage(EnemyType.BOSS) + 10;
+        playerHp -= dmg;
+        if (playerHp < 0) playerHp = 0;
+        System.out.println("Boss lands a crushing blow for " + dmg);
+        System.out.println("Player HP: " + playerHp + " / " + playerMaxHp);
+    }
+
+    static void pauseBetweenRounds() {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
         }
     }
 }
-

@@ -28,4 +28,10 @@ public class CombatEventBus {
             observer.onDefeat(player, enemy);
         }
     }
+
+    public void notifyEnrage(String enemyName) {
+        for (CombatObserver observer : observers) {
+            observer.onEnrage(enemyName);
+        }
+    }
 }

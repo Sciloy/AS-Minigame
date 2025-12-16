@@ -19,4 +19,9 @@ public class ConsoleCombatLogger implements CombatObserver {
             System.out.println(enemy.getName() + " has been defeated!");
         }
     }
+
+    @Override
+    public void onEnrage(String enemyName) {
+        System.out.println(enemyName + " becomes enraged!");
+    }
 }
